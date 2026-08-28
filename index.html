@@ -1,0 +1,503 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>CYBERPUNK // Smart Redirector</title>
+
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&family=Space+Mono:ital,wght@0,400;0,700;1,400&family=Syne:wght@600;700;800&display=swap" rel="stylesheet" />
+
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" />
+
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          fontFamily: {
+            syne: ['Syne', 'sans-serif'],
+            outfit: ['Outfit', 'sans-serif'],
+            mono: ['"Space Mono"', 'monospace'],
+          },
+          colors: {
+            cyber: {
+              base: '#02040a',
+              cyan: '#00f0ff',
+              indigo: '#6366f1',
+              fuchsia: '#ff007f',
+              glass: 'rgba(7, 13, 29, 0.72)',
+            }
+          }
+        }
+      }
+    }
+  </script>
+
+  <style>
+    /* Reset & Base */
+    * { box-sizing: border-box; }
+    body {
+      background-color: #02040a;
+      color: #f8fafc;
+      font-family: 'Outfit', sans-serif;
+      overflow-x: hidden;
+      min-height: 100vh;
+    }
+
+    /* Ambient Glow Orbs */
+    .glow-orb {
+      position: absolute;
+      border-radius: 9999px;
+      filter: blur(130px);
+      pointer-events: none;
+      opacity: 0.45;
+      animation: orbFloat 18s ease-in-out infinite alternate;
+    }
+    @keyframes orbFloat {
+      0% { transform: translate(0, 0) scale(1); }
+      50% { transform: translate(60px, 40px) scale(1.12); }
+      100% { transform: translate(-40px, 80px) scale(0.95); }
+    }
+
+    /* Glassmorphism Card styling */
+    .cyber-card {
+      background: rgba(8, 14, 30, 0.68);
+      backdrop-filter: blur(20px);
+      -webkit-backdrop-filter: blur(20px);
+      border: 1px solid rgba(0, 240, 255, 0.22);
+      box-shadow: 0 0 35px -8px rgba(0, 240, 255, 0.18), 0 20px 45px -10px rgba(0, 0, 0, 0.85);
+      position: relative;
+      transition: all 0.45s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+    .cyber-card::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      border-radius: inherit;
+      padding: 1px;
+      background: linear-gradient(135deg, rgba(0, 240, 255, 0.6), rgba(255, 0, 127, 0.3), rgba(99, 102, 241, 0.5));
+      -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+      -webkit-mask-composite: xor;
+      mask-composite: exclude;
+      pointer-events: none;
+    }
+
+    /* Supernova Optical Flash Overlay */
+    #flash-overlay {
+      position: fixed;
+      inset: 0;
+      background: radial-gradient(circle, rgba(255, 255, 255, 0.95) 0%, rgba(0, 240, 255, 0.8) 40%, rgba(2, 4, 10, 0) 80%);
+      opacity: 0;
+      pointer-events: none;
+      z-index: 100;
+      transition: opacity 0.15s ease-out;
+    }
+    #flash-overlay.flash-active {
+      opacity: 1;
+      transition: opacity 0.05s ease-in;
+    }
+
+    /* Epic Camera Shake */
+    @keyframes epicShake {
+      0%, 100% { transform: translate(0, 0) rotate(0deg); }
+      10% { transform: translate(-6px, -4px) rotate(-1deg); }
+      20% { transform: translate(5px, 6px) rotate(1.5deg); }
+      30% { transform: translate(-7px, 3px) rotate(-1deg); }
+      40% { transform: translate(6px, -5px) rotate(1deg); }
+      50% { transform: translate(-4px, 5px) rotate(-0.5deg); }
+      60% { transform: translate(5px, -3px) rotate(0.8deg); }
+      70% { transform: translate(-3px, 3px) rotate(-0.4deg); }
+      80% { transform: translate(4px, -2px) rotate(0.5deg); }
+      90% { transform: translate(-1px, 2px) rotate(-0.2deg); }
+    }
+    .epic-shake {
+      animation: epicShake 0.75s cubic-bezier(0.36, 0.07, 0.19, 0.97) both;
+    }
+
+    /* Cyber Blinking Cursor */
+    .cyber-cursor {
+      display: inline-block;
+      width: 8px;
+      color: #00f0ff;
+      animation: blink 0.8s infinite;
+    }
+    @keyframes blink {
+      0%, 49% { opacity: 1; }
+      50%, 100% { opacity: 0; }
+    }
+
+    /* Progress Ring SVG Stroke Transition */
+    .timer-ring-circle {
+      transition: stroke-dashoffset 0.1s linear, stroke 0.3s ease;
+      transform: rotate(-90deg);
+      transform-origin: 50% 50%;
+    }
+
+    /* Hyper Glow Elevate */
+    .hyper-glow {
+      box-shadow: 0 0 60px 10px rgba(0, 240, 255, 0.45), 0 0 90px 20px rgba(255, 0, 127, 0.25) !important;
+      border-color: rgba(0, 240, 255, 0.8) !important;
+    }
+  </style>
+</head>
+
+<body class="relative flex min-h-screen items-center justify-center p-4 selection:bg-cyan-500 selection:text-black">
+
+  <div id="flash-overlay"></div>
+
+  <div class="glow-orb w-96 h-96 bg-cyan-500 top-[-80px] left-[-80px]"></div>
+  <div class="glow-orb w-[460px] h-[460px] bg-fuchsia-600 bottom-[-100px] right-[-100px] animation-delay-4000"></div>
+  <div class="glow-orb w-80 h-80 bg-indigo-600 top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2"></div>
+
+  <canvas id="particleCanvas" class="fixed inset-0 pointer-events-none z-0"></canvas>
+
+  <main id="appContainer" class="relative z-10 w-full max-w-xl">
+
+    <div id="adminView" class="cyber-card rounded-2xl p-6 sm:p-8">
+      <div class="mb-6 border-b border-white/10 pb-5 text-center">
+        <div class="inline-flex items-center gap-2 rounded-full border border-cyan-500/30 bg-cyan-500/10 px-3 py-1 text-xs font-mono text-cyan-400 uppercase tracking-widest mb-3">
+          <i class="fa-solid fa-satellite-dish text-xs animate-pulse"></i> Link Generation Matrix
+        </div>
+        <h1 class="font-syne text-3xl sm:text-4xl font-extrabold tracking-tight text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 via-indigo-300 to-fuchsia-400">
+          CYBER//REDIRECT
+        </h1>
+        <p class="text-xs sm:text-sm text-slate-400 mt-1">Configure timed, zero-backend encrypted smart portals.</p>
+      </div>
+
+      <form id="generatorForm" class="space-y-4" onsubmit="return false;">
+        <div>
+          <label class="block font-mono text-xs text-slate-300 uppercase tracking-wider mb-1.5 flex items-center justify-between">
+            <span>Target Destination URL</span>
+            <span class="text-[10px] text-cyan-400">Required</span>
+          </label>
+          <div class="relative">
+            <span class="absolute inset-y-0 left-0 flex items-center pl-3.5 pointer-events-none text-slate-400 text-sm">
+              <i class="fa-solid fa-link text-cyan-400/80"></i>
+            </span>
+            <input 
+              type="text" 
+              id="destUrlInput" 
+              placeholder="https://example.com"
+              class="w-full rounded-lg border border-slate-700 bg-slate-950/70 py-2.5 pl-10 pr-3 text-sm text-white placeholder-slate-500 transition-all focus:border-cyan-400 focus:outline-none focus:ring-1 focus:ring-cyan-400 font-mono"
+              required
+            />
+          </div>
+        </div>
+
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <div>
+            <label class="block font-mono text-xs text-slate-300 uppercase tracking-wider mb-1.5">
+              Processing Time (Sec)
+            </label>
+            <div class="relative">
+              <span class="absolute inset-y-0 left-0 flex items-center pl-3.5 pointer-events-none text-slate-400 text-sm">
+                <i class="fa-solid fa-microchip text-indigo-400"></i>
+              </span>
+              <input 
+                type="number" 
+                id="pTimeInput" 
+                value="5" 
+                min="1" 
+                max="60"
+                class="w-full rounded-lg border border-slate-700 bg-slate-950/70 py-2.5 pl-10 pr-3 text-sm text-white placeholder-slate-500 transition-all focus:border-cyan-400 focus:outline-none focus:ring-1 focus:ring-cyan-400 font-mono"
+              />
+            </div>
+          </div>
+
+          <div>
+            <label class="block font-mono text-xs text-slate-300 uppercase tracking-wider mb-1.5">
+              Auto Redirect Delay (Sec)
+            </label>
+            <div class="relative">
+              <span class="absolute inset-y-0 left-0 flex items-center pl-3.5 pointer-events-none text-slate-400 text-sm">
+                <i class="fa-solid fa-hourglass-half text-fuchsia-400"></i>
+              </span>
+              <input 
+                type="number" 
+                id="rTimeInput" 
+                value="2" 
+                min="0" 
+                max="30"
+                class="w-full rounded-lg border border-slate-700 bg-slate-950/70 py-2.5 pl-10 pr-3 text-sm text-white placeholder-slate-500 transition-all focus:border-cyan-400 focus:outline-none focus:ring-1 focus:ring-cyan-400 font-mono"
+              />
+            </div>
+          </div>
+        </div>
+
+        <button 
+          id="btnGenerate" 
+          type="button" 
+          class="w-full group relative inline-flex items-center justify-center overflow-hidden rounded-lg bg-gradient-to-r from-cyan-500 via-indigo-500 to-fuchsia-500 p-0.5 font-semibold text-white transition-all duration-300 hover:shadow-[0_0_25px_rgba(0,240,255,0.5)] active:scale-[0.98]"
+        >
+          <span class="relative flex w-full items-center justify-center gap-2 rounded-md bg-slate-950/80 px-5 py-3 transition-all duration-300 group-hover:bg-transparent font-syne uppercase tracking-wider">
+            <i class="fa-solid fa-bolt-lightning text-cyan-400 group-hover:text-white transition-colors"></i> 
+            Generate Smart Link
+          </span>
+        </button>
+      </form>
+
+      <div id="outputContainer" class="hidden mt-6 border-t border-white/10 pt-5 space-y-3">
+        <label class="block font-mono text-xs text-cyan-300 uppercase tracking-wider flex items-center gap-2">
+          <i class="fa-solid fa-terminal text-xs"></i> Generated Payload URL
+        </label>
+        <div class="flex items-center gap-2">
+          <input 
+            type="text" 
+            id="generatedUrlOutput" 
+            readonly 
+            class="w-full rounded-lg border border-cyan-500/40 bg-black/80 px-3 py-2 text-xs text-cyan-300 font-mono select-all focus:outline-none"
+          />
+          <button 
+            id="btnCopy" 
+            title="Copy URL"
+            class="px-3.5 py-2 rounded-lg bg-cyan-500/20 border border-cyan-500/40 text-cyan-300 hover:bg-cyan-500 hover:text-black transition-all flex items-center gap-1.5 text-xs font-mono font-bold whitespace-nowrap"
+          >
+            <i class="fa-solid fa-copy"></i>
+            <span id="copyBtnText">Copy</span>
+          </button>
+        </div>
+
+        <div class="flex justify-end gap-2 pt-1">
+          <a 
+            id="btnTestLive" 
+            href="#" 
+            target="_blank" 
+            class="inline-flex items-center gap-2 text-xs font-mono text-fuchsia-400 hover:text-fuchsia-300 transition-colors"
+          >
+            <span>Live Test Preview</span> <i class="fa-solid fa-arrow-up-right-from-square text-[10px]"></i>
+          </a>
+        </div>
+      </div>
+    </div>
+
+
+    <div id="processingView" class="hidden cyber-card rounded-2xl p-6 sm:p-8 text-center space-y-6">
+      
+      <div class="flex items-center justify-between border-b border-white/10 pb-4 font-mono text-xs text-slate-400">
+        <div class="flex items-center gap-2">
+          <span class="h-2 w-2 rounded-full bg-emerald-400 animate-ping"></span>
+          <span class="text-emerald-400 uppercase tracking-wider">Gateway Bypass Active</span>
+        </div>
+        <div class="flex items-center gap-1.5 text-slate-300">
+          <i class="fa-solid fa-network-wired text-cyan-400"></i>
+          <span>LATENCY:</span>
+          <span id="pingCounter" class="text-cyan-400 font-bold tabular-nums">28ms</span>
+        </div>
+      </div>
+
+      <div class="relative flex justify-center items-center my-2">
+        <svg class="w-48 h-48 drop-shadow-[0_0_15px_rgba(0,240,255,0.4)]" viewBox="0 0 160 160">
+          <circle cx="80" cy="80" r="70" stroke="rgba(255,255,255,0.06)" stroke-width="8" fill="none" />
+          <circle 
+            id="timerRing"
+            class="timer-ring-circle"
+            cx="80" 
+            cy="80" 
+            r="70" 
+            stroke="#00f0ff" 
+            stroke-width="8" 
+            stroke-linecap="round"
+            fill="none" 
+            stroke-dasharray="439.82" 
+            stroke-dashoffset="0"
+          />
+        </svg>
+
+        <div class="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
+          <span id="countdownNumber" class="font-syne text-5xl font-extrabold text-white tabular-nums tracking-tighter drop-shadow-md">
+            5
+          </span>
+          <span class="font-mono text-[11px] text-cyan-400 uppercase tracking-widest mt-1">Decrypting</span>
+        </div>
+      </div>
+
+      <div class="h-10 flex items-center justify-center px-4 bg-slate-950/60 rounded-lg border border-white/5 font-mono text-sm sm:text-base text-cyan-300 tracking-wide overflow-hidden">
+        <span id="matrixText" class="truncate">INITIALIZING HANDSHAKE...</span>
+        <span class="cyber-cursor">▋</span>
+      </div>
+
+      <div class="w-full bg-slate-900 rounded-full h-1.5 overflow-hidden p-0.5 border border-white/10">
+        <div 
+          id="linearProgress" 
+          class="h-full bg-gradient-to-r from-cyan-400 via-indigo-500 to-fuchsia-500 rounded-full transition-all duration-100 ease-linear shadow-[0_0_12px_rgba(0,240,255,0.8)]"
+          style="width: 0%"
+        ></div>
+      </div>
+
+      <div class="grid grid-cols-3 gap-2 pt-2 border-t border-white/10 text-[11px] font-mono text-slate-400">
+        <div class="flex items-center justify-center gap-1.5 p-2 rounded-lg bg-white/[0.02] border border-white/5">
+          <i class="fa-solid fa-shield-halved text-cyan-400"></i>
+          <span>Encrypted</span>
+        </div>
+        <div class="flex items-center justify-center gap-1.5 p-2 rounded-lg bg-white/[0.02] border border-white/5">
+          <i class="fa-solid fa-robot text-indigo-400"></i>
+          <span>Bot Bypass</span>
+        </div>
+        <div class="flex items-center justify-center gap-1.5 p-2 rounded-lg bg-white/[0.02] border border-white/5">
+          <i class="fa-solid fa-bolt text-fuchsia-400"></i>
+          <span>Direct P2P</span>
+        </div>
+      </div>
+    </div>
+
+
+    <div id="unlockedView" class="hidden cyber-card rounded-2xl p-6 sm:p-8 text-center space-y-6">
+      
+      <div class="relative inline-flex items-center justify-center w-20 h-20 rounded-2xl bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 mx-auto shadow-[0_0_30px_rgba(16,185,129,0.35)]">
+        <i class="fa-solid fa-lock-open text-3xl animate-bounce"></i>
+      </div>
+
+      <div class="space-y-1">
+        <h2 class="font-syne text-2xl sm:text-3xl font-bold text-white tracking-wide">
+          Access Granted!
+        </h2>
+        <p class="text-sm text-slate-400">Security verification passed. Handshake complete.</p>
+      </div>
+
+      <div class="py-3 px-4 rounded-xl bg-slate-950/70 border border-emerald-500/20 flex items-center justify-center gap-3">
+        <i class="fa-solid fa-circle-notch fa-spin text-emerald-400 text-lg"></i>
+        <span class="font-mono text-sm text-emerald-300 tracking-wide">
+          Redirecting to secure gateway...
+        </span>
+      </div>
+
+      <div class="pt-2">
+        <a 
+          id="btnManualDestination" 
+          href="#" 
+          class="w-full inline-flex items-center justify-center gap-2 rounded-lg bg-gradient-to-r from-emerald-500 to-teal-600 px-6 py-3 font-semibold text-slate-950 uppercase font-syne tracking-wider transition-all hover:brightness-110 hover:shadow-[0_0_25px_rgba(16,185,129,0.5)] active:scale-[0.98]"
+        >
+          <span>Open Destination Now</span>
+          <i class="fa-solid fa-arrow-right"></i>
+        </a>
+      </div>
+    </div>
+
+  </main>
+
+  <script>
+    /* --- CONSTANTS & HELPERS --- */
+    const CIRCUMFERENCE = 2 * Math.PI * 70; // r = 70 => ~439.822
+
+    // UTF-8 Safe Base64 Encoders/Decoders
+    function encodePayload(obj) {
+      const jsonStr = JSON.stringify(obj);
+      return btoa(encodeURIComponent(jsonStr).replace(/%([0-9A-F]{2})/g, (match, p1) => 
+        String.fromCharCode(parseInt(p1, 16))
+      ));
+    }
+
+    function decodePayload(str) {
+      try {
+        const decoded = decodeURIComponent(Array.prototype.map.call(atob(str), (c) => 
+          '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2)
+        ).join(''));
+        return JSON.parse(decoded);
+      } catch (e) {
+        console.error("Payload decoding error:", e);
+        return null;
+      }
+    }
+
+    function sanitizeUrl(rawUrl) {
+      let trimmed = rawUrl.trim();
+      if (!/^https?:\/\//i.test(trimmed)) {
+        trimmed = 'https://' + trimmed;
+      }
+      return trimmed;
+    }
+
+    /* --- MATRIX SCRAMBLER EFFECT --- */
+    class MatrixDecrypter {
+      constructor(element) {
+        this.el = element;
+        this.chars = '!<>-_\\/[]{}—=+*^?#________010101';
+        this.frame = 0;
+        this.queue = [];
+        this.resolve = null;
+      }
+
+      setText(newText) {
+        const oldText = this.el.innerText;
+        const length = Math.max(oldText.length, newText.length);
+        this.queue = [];
+        for (let i = 0; i < length; i++) {
+          const from = oldText[i] || '';
+          const to = newText[i] || '';
+          const start = Math.floor(Math.random() * 8);
+          const end = start + Math.floor(Math.random() * 12);
+          this.queue.push({ from, to, start, end, char: '' });
+        }
+        cancelAnimationFrame(this.frameRequest);
+        this.frame = 0;
+        this.update();
+      }
+
+      update() {
+        let output = '';
+        let complete = 0;
+        for (let i = 0, n = this.queue.length; i < n; i++) {
+          let { from, to, start, end, char } = this.queue[i];
+          if (this.frame >= end) {
+            complete++;
+            output += to;
+          } else if (this.frame >= start) {
+            if (!char || Math.random() < 0.28) {
+              char = this.chars[Math.floor(Math.random() * this.chars.length)];
+              this.queue[i].char = char;
+            }
+            output += char;
+          } else {
+            output += from;
+          }
+        }
+        this.el.innerText = output;
+        if (complete !== this.queue.length) {
+          this.frameRequest = requestAnimationFrame(() => this.update());
+          this.frame++;
+        }
+      }
+    }
+
+    /* --- CONSTELLATION PARTICLES CANVAS --- */
+    function initParticles() {
+      const canvas = document.getElementById('particleCanvas');
+      const ctx = canvas.getContext('2d');
+      let w, h, particles = [];
+      const mouse = { x: null, y: null, radius: 120 };
+
+      function resize() {
+        w = canvas.width = window.innerWidth;
+        h = canvas.height = window.innerHeight;
+      }
+      resize();
+      window.addEventListener('resize', resize);
+      window.addEventListener('mousemove', (e) => { mouse.x = e.x; mouse.y = e.y; });
+      window.addEventListener('mouseout', () => { mouse.x = null; mouse.y = null; });
+
+      const count = Math.min(Math.floor((w * h) / 14000), 75);
+      for (let i = 0; i < count; i++) {
+        particles.push({
+          x: Math.random() * w,
+          y: Math.random() * h,
+          vx: (Math.random() - 0.5) * 0.7,
+          vy: (Math.random() - 0.5) * 0.7,
+          radius: Math.random() * 1.5 + 0.8
+        });
+      }
+
+      function draw() {
+        ctx.clearRect(0, 0, w, h);
+        for (let i = 0; i < particles.length; i++) {
+          let p = particles[i];
+          p.x += p.vx;
+          p.y += p.vy;
+
+          if (p.x < 0 || p.x > w) p.vx *= -1;
+          if (p.y < 0 || p.y > h) p.vy *= -1;
+
+          // Mouse push
+          if (mouse.x !== 
