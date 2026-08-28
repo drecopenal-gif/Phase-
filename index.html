@@ -1,0 +1,269 @@
+<!DOCTYPE html>
+<html lang="gu">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Smart Link Generator & Gateway</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
+  <style>
+    @keyframes pulse-glow {
+      0%, 100% { transform: scale(1); filter: drop-shadow(0 0 15px rgba(99, 102, 241, 0.6)); }
+      50% { transform: scale(1.05); filter: drop-shadow(0 0 25px rgba(168, 85, 247, 0.8)); }
+    }
+    .animate-glow { animation: pulse-glow 2.5s infinite ease-in-out; }
+    .glass-card {
+      background: rgba(17, 24, 39, 0.75);
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+    }
+  </style>
+</head>
+<body class="min-h-screen bg-gradient-to-br from-slate-950 via-indigo-950 to-slate-900 text-white flex items-center justify-center p-4 font-sans">
+
+  <!-- ==================== ADMIN PANEL ==================== -->
+  <div id="adminPanel" class="w-full max-w-lg glass-card rounded-2xl p-6 sm:p-8 shadow-2xl border border-white/10 hidden">
+    <div class="text-center mb-6">
+      <div class="inline-flex items-center justify-center w-14 h-14 rounded-2xl bg-indigo-500/20 text-indigo-400 mb-3 border border-indigo-500/30">
+        <i class="fa-solid fa-wand-magic-sparkles text-2xl"></i>
+      </div>
+      <h1 class="text-2xl sm:text-3xl font-bold bg-gradient-to-r from-indigo-400 via-purple-300 to-pink-400 bg-clip-text text-transparent">Link Gateway Studio</h1>
+      <p class="text-sm text-slate-400 mt-1">તમારી કસ્ટમ ટાઈમર વાળી લિંક બનાવો</p>
+    </div>
+
+    <form id="generatorForm" class="space-y-4">
+      <!-- Input 1: Main Destination Link -->
+      <div>
+        <label class="block text-xs font-semibold uppercase tracking-wider text-slate-300 mb-1">
+          <i class="fa-solid fa-link mr-1 text-indigo-400"></i> Main Destination URL
+        </label>
+        <input 
+          type="url" 
+          id="mainLink" 
+          required 
+          placeholder="https://example.com/your-target-link" 
+          class="w-full px-4 py-3 bg-slate-900/80 border border-slate-700 rounded-xl text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-indigo-500 transition"
+        />
+      </div>
+
+      <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        <!-- Input 2: Processing Timer -->
+        <div>
+          <label class="block text-xs font-semibold uppercase tracking-wider text-slate-300 mb-1">
+            <i class="fa-solid fa-gear mr-1 text-purple-400"></i> Processing Time (Sec)
+          </label>
+          <input 
+            type="number" 
+            id="processingTime" 
+            min="1" 
+            value="5" 
+            required 
+            class="w-full px-4 py-3 bg-slate-900/80 border border-slate-700 rounded-xl text-white focus:outline-none focus:ring-2 focus:ring-purple-500 transition"
+          />
+        </div>
+
+        <!-- Input 3: Auto-Redirect Timer -->
+        <div>
+          <label class="block text-xs font-semibold uppercase tracking-wider text-slate-300 mb-1">
+            <i class="fa-solid fa-clock-rotate-left mr-1 text-pink-400"></i> Reveal Timer (Sec)
+          </label>
+          <input 
+            type="number" 
+            id="revealTime" 
+            min="1" 
+            value="5" 
+            required 
+            class="w-full px-4 py-3 bg-slate-900/80 border border-slate-700 rounded-xl text-white focus:outline-none focus:ring-2 focus:ring-pink-500 transition"
+          />
+        </div>
+      </div>
+
+      <!-- Generate Button -->
+      <button 
+        type="submit" 
+        class="w-full py-3.5 bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500 hover:opacity-95 active:scale-[0.99] font-semibold rounded-xl shadow-lg shadow-indigo-500/25 transition duration-200 flex items-center justify-center gap-2">
+        <i class="fa-solid fa-bolt"></i> Generate Link
+      </button>
+    </form>
+
+    <!-- Output Box with Copy Button -->
+    <div id="outputSection" class="mt-6 pt-6 border-t border-slate-700/60 hidden">
+      <label class="block text-xs font-semibold uppercase tracking-wider text-slate-300 mb-2">Generated Sharable Link</label>
+      <div class="flex items-center gap-2 bg-slate-950/80 p-2 rounded-xl border border-slate-700">
+        <input 
+          type="text" 
+          id="generatedUrl" 
+          readonly 
+          class="w-full bg-transparent px-2 text-sm text-indigo-300 outline-none select-all"
+        />
+        <button 
+          id="copyBtn" 
+          type="button" 
+          class="px-4 py-2 bg-indigo-600 hover:bg-indigo-500 active:scale-95 text-white text-xs font-medium rounded-lg transition flex items-center gap-1.5 flex-shrink-0">
+          <i class="fa-regular fa-copy"></i>
+          <span id="copyText">Copy Link</span>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ==================== VISITOR GATEWAY PANEL ==================== -->
+  <div id="visitorPanel" class="w-full max-w-md glass-card rounded-2xl p-6 sm:p-8 shadow-2xl border border-white/10 text-center hidden">
+    
+    <!-- State 1: Processing State -->
+    <div id="processingState" class="space-y-6">
+      <div class="relative w-24 h-24 mx-auto flex items-center justify-center animate-glow">
+        <div class="absolute inset-0 rounded-full border-4 border-indigo-500/20"></div>
+        <div class="absolute inset-0 rounded-full border-4 border-indigo-400 border-t-transparent animate-spin"></div>
+        <i class="fa-solid fa-shield-halved text-3xl text-indigo-400"></i>
+      </div>
+
+      <div>
+        <h2 class="text-xl font-bold text-white mb-1">Verifying Your Request</h2>
+        <p class="text-xs text-slate-400">લિંક સુરક્ષિત રીતે પ્રોસેસ થઈ રહી છે...</p>
+      </div>
+
+      <!-- Progress Bar -->
+      <div class="w-full bg-slate-800 rounded-full h-2 overflow-hidden border border-slate-700">
+        <div id="processProgressBar" class="bg-gradient-to-r from-indigo-500 to-purple-500 h-full w-0 transition-all duration-300"></div>
+      </div>
+      <p id="processStatusText" class="text-xs font-mono text-indigo-300">કૃપા કરીને રાહ જુઓ...</p>
+    </div>
+
+    <!-- State 2: Reveal & Auto-Redirect State -->
+    <div id="revealState" class="space-y-6 hidden">
+      <div class="w-20 h-20 mx-auto rounded-full bg-emerald-500/20 border border-emerald-500/40 flex items-center justify-center text-emerald-400 text-3xl animate-bounce">
+        <i class="fa-solid fa-check"></i>
+      </div>
+
+      <div>
+        <h2 class="text-2xl font-bold text-white mb-2">Link Ready!</h2>
+        <p class="text-sm text-slate-300">
+          તમે <span id="countdownTimer" class="font-bold text-emerald-400 text-lg">5</span> સેકન્ડમાં રીડાયરેક્ટ થશો.
+        </p>
+      </div>
+
+      <a 
+        id="directAccessBtn" 
+        href="#" 
+        class="block w-full py-3.5 bg-gradient-to-r from-emerald-500 to-teal-600 hover:opacity-95 active:scale-[0.99] font-semibold rounded-xl shadow-lg shadow-emerald-500/25 transition text-white">
+        હમણાં જ ખોલો (Open Now) <i class="fa-solid fa-arrow-up-right-from-square ml-1 text-xs"></i>
+      </a>
+    </div>
+  </div>
+
+  <!-- JavaScript Logic -->
+  <script>
+    const urlParams = new URLSearchParams(window.location.search);
+    const dataHash = urlParams.get('d');
+
+    const adminPanel = document.getElementById('adminPanel');
+    const visitorPanel = document.getElementById('visitorPanel');
+
+    // Routing: Visitor view if payload exists, otherwise Admin Panel
+    if (dataHash) {
+      handleVisitorFlow(dataHash);
+    } else {
+      adminPanel.classList.remove('hidden');
+    }
+
+    // --- Admin Generator Logic ---
+    const generatorForm = document.getElementById('generatorForm');
+    const outputSection = document.getElementById('outputSection');
+    const generatedUrl = document.getElementById('generatedUrl');
+    const copyBtn = document.getElementById('copyBtn');
+    const copyText = document.getElementById('copyText');
+
+    generatorForm.addEventListener('submit', (e) => {
+      e.preventDefault();
+      
+      const payload = {
+        l: document.getElementById('mainLink').value.trim(),
+        p: parseInt(document.getElementById('processingTime').value, 10),
+        r: parseInt(document.getElementById('revealTime').value, 10)
+      };
+
+      const encoded = btoa(encodeURIComponent(JSON.stringify(payload)));
+      const fullUrl = `${window.location.origin}${window.location.pathname}?d=${encoded}`;
+
+      generatedUrl.value = fullUrl;
+      outputSection.classList.remove('hidden');
+    });
+
+    copyBtn.addEventListener('click', () => {
+      navigator.clipboard.writeText(generatedUrl.value).then(() => {
+        copyText.textContent = "Copied!";
+        copyBtn.classList.replace('bg-indigo-600', 'bg-emerald-600');
+        setTimeout(() => {
+          copyText.textContent = "Copy Link";
+          copyBtn.classList.replace('bg-emerald-600', 'bg-indigo-600');
+        }, 2000);
+      });
+    });
+
+    // --- Visitor Processing & Redirect Logic ---
+    function handleVisitorFlow(hash) {
+      visitorPanel.classList.remove('hidden');
+
+      try {
+        const decoded = JSON.parse(decodeURIComponent(atob(hash)));
+        const targetUrl = decoded.l;
+        const processSec = decoded.p || 5;
+        const revealSec = decoded.r || 5;
+
+        const processProgressBar = document.getElementById('processProgressBar');
+        const processingState = document.getElementById('processingState');
+        const revealState = document.getElementById('revealState');
+        const countdownTimer = document.getElementById('countdownTimer');
+        const directAccessBtn = document.getElementById('directAccessBtn');
+
+        directAccessBtn.href = targetUrl;
+
+        // Step 1: Processing Progress Bar Animation
+        let progress = 0;
+        const stepInterval = 50; // ms
+        const totalSteps = (processSec * 1000) / stepInterval;
+        const increment = 100 / totalSteps;
+
+        const processTimer = setInterval(() => {
+          progress += increment;
+          processProgressBar.style.width = `${Math.min(progress, 100)}%`;
+
+          if (progress >= 100) {
+            clearInterval(processTimer);
+            // Step 2: Switch to Reveal & Countdown
+            processingState.classList.add('hidden');
+            revealState.classList.remove('hidden');
+            startRevealCountdown(targetUrl, revealSec, countdownTimer);
+          }
+        }, stepInterval);
+
+      } catch (err) {
+        visitorPanel.innerHTML = `
+          <div class="text-rose-400 p-4">
+            <i class="fa-solid fa-triangle-exclamation text-3xl mb-2"></i>
+            <h3 class="font-bold">Invalid / Corrupted Link</h3>
+            <p class="text-xs text-slate-400 mt-1">લિંક યોગ્ય નથી અથવા તૂટી ગયેલી છે.</p>
+          </div>
+        `;
+      }
+    }
+
+    function startRevealCountdown(targetUrl, seconds, timerElement) {
+      let remaining = seconds;
+      timerElement.textContent = remaining;
+
+      const countdownInterval = setInterval(() => {
+        remaining -= 1;
+        timerElement.textContent = remaining;
+
+        if (remaining <= 0) {
+          clearInterval(countdownInterval);
+          window.location.href = targetUrl;
+        }
+      }, 1000);
+    }
+  </script>
+</body>
+</html>
