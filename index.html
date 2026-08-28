@@ -1,0 +1,497 @@
+<!DOCTYPE html>
+<html lang="gu">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Quantum Secured Gateway</title>
+
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link
+    rel="stylesheet"
+    href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css"
+  />
+  <link
+    href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&family=Space+Mono:wght@400;700&family=Syne:wght@700;800;900&display=swap"
+    rel="stylesheet"
+  />
+
+  <style>
+    :root {
+      --display: "Syne", sans-serif;
+      --body: "Outfit", sans-serif;
+      --mono: "Space Mono", monospace;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: var(--body);
+      background: #02040a;
+    }
+
+    .font-display {
+      font-family: var(--display);
+    }
+
+    .font-mono-tech {
+      font-family: var(--mono);
+    }
+
+    .holo-gradient {
+      background: linear-gradient(
+        135deg,
+        #00f2fe,
+        #4facfe 25%,
+        #7f00ff 50%,
+        #e100ff 75%,
+        #00f2fe
+      );
+      background-size: 300% 300%;
+      animation: shine 6s ease infinite;
+    }
+
+    .glass {
+      background: linear-gradient(
+        135deg,
+        rgba(255, 255, 255, 0.12),
+        rgba(255, 255, 255, 0.02)
+      );
+    }
+
+    .shake {
+      animation: shake 0.65s ease both;
+    }
+
+    @keyframes shine {
+      0%,
+      100% {
+        background-position: 0 50%;
+      }
+      50% {
+        background-position: 100% 50%;
+      }
+    }
+
+    @keyframes shake {
+      0%,
+      100% {
+        transform: translate(0) scale(1);
+      }
+      20% {
+        transform: translate(9px, -8px) rotate(1deg) scale(1.02);
+      }
+      40% {
+        transform: translate(-8px, 7px) rotate(-1deg);
+      }
+      60% {
+        transform: translate(5px, -4px);
+      }
+    }
+
+    @keyframes blink {
+      50% {
+        opacity: 0;
+      }
+    }
+
+    .cursor {
+      animation: blink 0.8s infinite;
+    }
+
+    .ring {
+      transition: stroke-dashoffset 0.8s ease;
+      transform: rotate(-90deg);
+      transform-origin: 50% 50%;
+    }
+  </style>
+</head>
+
+<body class="min-h-screen overflow-hidden text-slate-100 antialiased">
+  <canvas id="canvas" class="fixed inset-0 -z-20"></canvas>
+
+  <div class="fixed -left-48 -top-48 -z-10 h-[38rem] w-[38rem] rounded-full bg-cyan-600/15 blur-[160px]"></div>
+  <div class="fixed -bottom-48 -right-48 -z-10 h-[38rem] w-[38rem] rounded-full bg-fuchsia-600/15 blur-[160px]"></div>
+
+  <main id="card" class="relative z-10 mx-auto flex min-h-screen w-full max-w-lg items-center p-4">
+    <section class="w-full rounded-[2.75rem] bg-gradient-to-b from-cyan-400/50 via-indigo-500/30 to-purple-500/50 p-[1.5px] shadow-[0_0_40px_-10px_rgba(6,182,212,.4)]">
+      <div class="relative overflow-hidden rounded-[2.65rem] border border-white/10 bg-[#060914]/90 p-7 text-center shadow-2xl backdrop-blur-3xl sm:p-10">
+        <div class="glass pointer-events-none absolute inset-0"></div>
+
+        <div id="admin-view" class="relative z-10 space-y-6 text-left">
+          <header class="flex items-center gap-4 border-b border-white/10 pb-5">
+            <div class="rounded-2xl border border-cyan-500/30 bg-cyan-500/10 p-3 text-cyan-400">
+              <i class="fa-solid fa-sliders text-xl"></i>
+            </div>
+            <div>
+              <h1 class="font-display text-2xl font-extrabold text-white">
+                Admin Gateway Hub
+              </h1>
+              <p class="font-mono-tech text-xs text-slate-400">
+                Configure Secure Timed Routing
+              </p>
+            </div>
+          </header>
+
+          <div class="space-y-4">
+            <label class="block">
+              <span class="mb-2 block font-mono-tech text-xs font-semibold uppercase tracking-wider text-slate-300">
+                <i class="fa-solid fa-link mr-1.5 text-cyan-400"></i>
+                Main Destination Link
+              </span>
+              <input
+                id="target-url-input"
+                type="url"
+                value="https://google.com"
+                placeholder="https://example.com"
+                class="w-full rounded-2xl border border-white/15 bg-slate-950/70 px-4 py-3.5 font-mono-tech text-sm text-white outline-none transition focus:border-cyan-400 focus:ring-2 focus:ring-cyan-400/20"
+              />
+            </label>
+
+            <div class="grid gap-4 sm:grid-cols-2">
+              <label>
+                <span class="mb-2 block font-mono-tech text-xs font-semibold uppercase tracking-wider text-slate-300">
+                  <i class="fa-solid fa-hourglass-half mr-1.5 text-purple-400"></i>
+                  Processing Time
+                </span>
+                <input
+                  id="process-sec-input"
+                  type="number"
+                  min="1"
+                  max="60"
+                  value="5"
+                  class="w-full rounded-2xl border border-white/15 bg-slate-950/70 px-4 py-3.5 font-mono-tech text-sm text-white outline-none focus:border-purple-400"
+                />
+              </label>
+
+              <label>
+                <span class="mb-2 block font-mono-tech text-xs font-semibold uppercase tracking-wider text-slate-300">
+                  <i class="fa-solid fa-bolt-lightning mr-1.5 text-cyan-400"></i>
+                  Redirect Delay
+                </span>
+                <input
+                  id="redirect-sec-input"
+                  type="number"
+                  min="0"
+                  max="60"
+                  value="2"
+                  class="w-full rounded-2xl border border-white/15 bg-slate-950/70 px-4 py-3.5 font-mono-tech text-sm text-white outline-none focus:border-cyan-400"
+                />
+              </label>
+            </div>
+
+            <button
+              id="generate-button"
+              type="button"
+              class="holo-gradient mt-2 flex w-full items-center justify-center gap-2.5 rounded-2xl px-6 py-4 font-display text-sm font-bold uppercase tracking-wider text-white shadow-[0_0_25px_rgba(6,182,212,.4)] transition hover:scale-[1.01] active:scale-[.98]"
+            >
+              <i class="fa-solid fa-wand-magic-sparkles"></i>
+              Generate Smart Link
+            </button>
+          </div>
+
+          <div id="output-box" class="hidden space-y-3 border-t border-white/10 pt-6">
+            <label class="block font-mono-tech text-xs font-semibold uppercase tracking-wider text-cyan-400">
+              <i class="fa-solid fa-circle-check mr-1.5"></i>
+              Generated Link Ready
+            </label>
+
+            <div class="flex gap-2">
+              <input
+                id="result-url-input"
+                readonly
+                class="min-w-0 flex-1 rounded-2xl border border-white/15 bg-slate-950 px-4 py-3.5 font-mono-tech text-xs text-slate-300 outline-none"
+              />
+              <button
+                id="copy-button"
+                type="button"
+                class="rounded-2xl bg-cyan-500 px-5 py-3.5 font-display text-xs font-extrabold uppercase tracking-wider text-slate-950 transition hover:bg-cyan-400"
+              >
+                <i class="fa-solid fa-copy"></i>
+                <span id="copy-label">Copy</span>
+              </button>
+            </div>
+
+            <button
+              id="preview-button"
+              type="button"
+              class="w-full rounded-xl border border-cyan-500/30 bg-cyan-500/10 py-3 font-mono-tech text-xs text-cyan-300 transition hover:bg-cyan-500/20"
+            >
+              <i class="fa-solid fa-play mr-2 text-cyan-400"></i>
+              Test This Link Now
+            </button>
+          </div>
+        </div>
+
+        <div id="processing-view" class="relative z-10 hidden space-y-6">
+          <div class="flex items-center justify-between border-b border-white/5 pb-5">
+            <span class="font-mono-tech text-xs font-semibold tracking-wider text-slate-300">
+              <i class="fa-solid fa-circle mr-2 text-cyan-400"></i>
+              QUANTUM BYPASS
+            </span>
+            <span class="rounded-full border border-white/10 bg-white/5 px-3 py-1 font-mono-tech text-xs text-cyan-300">
+              <i class="fa-solid fa-microchip mr-1 text-fuchsia-400"></i>
+              <span id="latency">0.4ms</span>
+            </span>
+          </div>
+
+          <div class="relative mx-auto flex h-48 w-48 items-center justify-center">
+            <div class="absolute inset-0 animate-spin rounded-full border border-dashed border-cyan-500/30 [animation-duration:15s]"></div>
+            <svg class="h-full w-full p-2" viewBox="0 0 160 160">
+              <circle cx="80" cy="80" r="66" stroke="#0f172a" stroke-width="5" fill="transparent" />
+              <circle
+                id="ring"
+                cx="80"
+                cy="80"
+                r="66"
+                stroke="#22d3ee"
+                stroke-width="7"
+                stroke-linecap="round"
+                fill="transparent"
+                stroke-dasharray="414.7"
+                stroke-dashoffset="414.7"
+                class="ring"
+              />
+            </svg>
+            <div class="absolute inset-0 flex flex-col items-center justify-center">
+              <span id="counter" class="font-display text-6xl font-black text-white">5</span>
+              <span class="font-mono-tech text-[10px] uppercase tracking-[.25em] text-cyan-300">
+                Sec Left
+              </span>
+            </div>
+          </div>
+
+          <div>
+            <h2 class="mb-2 font-display text-3xl font-extrabold text-white">
+              Decrypting Channel
+            </h2>
+            <p class="flex items-center justify-center font-mono-tech text-xs text-slate-300">
+              <span class="mr-2 font-bold text-cyan-400">&gt;</span>
+              <span id="scramble" class="text-cyan-300">INITIALIZING_SECURE_TUNNEL</span>
+              <span class="cursor ml-1 font-bold text-cyan-400">▋</span>
+            </p>
+          </div>
+
+          <div class="space-y-2">
+            <div class="flex justify-between font-mono-tech text-xs text-slate-400">
+              <span>SECURITY_SCAN</span>
+              <span id="percent" class="font-bold text-cyan-400">0%</span>
+            </div>
+            <div class="h-3 overflow-hidden rounded-full border border-white/10 bg-slate-950 p-0.5">
+              <div id="progress" class="h-full rounded-full bg-gradient-to-r from-cyan-400 to-fuchsia-500 transition-all duration-300" style="width: 0%"></div>
+            </div>
+          </div>
+        </div>
+
+        <div id="revealed-view" class="relative z-10 hidden space-y-7 py-4">
+          <div class="holo-gradient mx-auto flex h-20 w-20 items-center justify-center rounded-3xl p-0.5 text-3xl text-cyan-300 shadow-[0_0_35px_rgba(6,182,212,.7)]">
+            <div class="flex h-full w-full items-center justify-center rounded-[22px] bg-[#060914]">
+              <i class="fa-solid fa-lock-open"></i>
+            </div>
+          </div>
+
+          <div>
+            <h2 class="font-display text-3xl font-extrabold text-white">Access Granted!</h2>
+            <p class="mt-2 text-sm text-slate-300">
+              Redirecting in <span id="redirect-counter" class="font-bold text-cyan-300">2</span> seconds...
+            </p>
+          </div>
+
+          <a
+            id="target-link"
+            href="#"
+            target="_blank"
+            rel="noopener noreferrer"
+            class="holo-gradient flex w-full items-center justify-center gap-3 rounded-2xl px-8 py-4 font-display text-base font-extrabold uppercase tracking-wider text-white shadow-[0_0_35px_rgba(6,182,212,.5)] transition hover:scale-[1.02]"
+          >
+            Open Destination
+            <i class="fa-solid fa-arrow-up-right-from-square text-xs"></i>
+          </a>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <script>
+    const $ = (id) => document.getElementById(id);
+    let config = null;
+    let timer = null;
+
+    const canvas = $("canvas");
+    const ctx = canvas.getContext("2d");
+    const particles = [];
+
+    function resizeCanvas() {
+      canvas.width = innerWidth;
+      canvas.height = innerHeight;
+    }
+
+    function createParticles() {
+      particles.length = 0;
+      for (let i = 0; i < 45; i++) {
+        particles.push({
+          x: Math.random() * canvas.width,
+          y: Math.random() * canvas.height,
+          vx: (Math.random() - 0.5) * 0.7,
+          vy: (Math.random() - 0.5) * 0.7,
+          size: Math.random() * 2 + 1
+        });
+      }
+    }
+
+    function drawParticles() {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+      particles.forEach((p) => {
+        p.x += p.vx;
+        p.y += p.vy;
+
+        if (p.x < 0 || p.x > canvas.width) p.vx *= -1;
+        if (p.y < 0 || p.y > canvas.height) p.vy *= -1;
+
+        ctx.fillStyle = "rgba(34,211,238,.6)";
+        ctx.beginPath();
+        ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
+        ctx.fill();
+      });
+
+      for (let i = 0; i < particles.length; i++) {
+        for (let j = i + 1; j < particles.length; j++) {
+          const distance = Math.hypot(
+            particles[i].x - particles[j].x,
+            particles[i].y - particles[j].y
+          );
+
+          if (distance < 100) {
+            ctx.strokeStyle = `rgba(147,51,234,${0.25 * (1 - distance / 100)})`;
+            ctx.beginPath();
+            ctx.moveTo(particles[i].x, particles[i].y);
+            ctx.lineTo(particles[j].x, particles[j].y);
+            ctx.stroke();
+          }
+        }
+      }
+
+      requestAnimationFrame(drawParticles);
+    }
+
+    function encodeConfig(data) {
+      return btoa(unescape(encodeURIComponent(JSON.stringify(data))));
+    }
+
+    function decodeConfig(value) {
+      return JSON.parse(decodeURIComponent(escape(atob(value))));
+    }
+
+    function generateEncryptedLink() {
+      const target = $("target-url-input").value.trim();
+      const processSeconds = Math.max(1, Number($("process-sec-input").value) || 5);
+      const redirectSeconds = Math.max(0, Number($("redirect-sec-input").value) || 0);
+
+      try {
+        const url = new URL(target);
+        if (!/^https?:$/.test(url.protocol)) throw new Error();
+      } catch {
+        $("target-url-input").focus();
+        $("card").classList.remove("shake");
+        void $("card").offsetWidth;
+        $("card").classList.add("shake");
+        return;
+      }
+
+      config = {
+        target,
+        processSeconds,
+        redirectSeconds
+      };
+
+      const link = `${location.origin}${location.pathname}#q=${encodeConfig(config)}`;
+      $("result-url-input").value = link;
+      $("output-box").classList.remove("hidden");
+    }
+
+    function copyGeneratedLink() {
+      navigator.clipboard.writeText($("result-url-input").value).then(() => {
+        $("copy-label").textContent = "Copied";
+        setTimeout(() => ($("copy-label").textContent = "Copy"), 1500);
+      });
+    }
+
+    function startGateway(data) {
+      config = data;
+      $("admin-view").classList.add("hidden");
+      $("processing-view").classList.remove("hidden");
+      $("counter").textContent = data.processSeconds;
+
+      let remaining = data.processSeconds;
+      let progress = 0;
+      const ringLength = 414.7;
+
+      clearInterval(timer);
+      timer = setInterval(() => {
+        remaining--;
+        progress = Math.min(100, ((data.processSeconds - remaining) / data.processSeconds) * 100);
+
+        $("counter").textContent = Math.max(0, remaining);
+        $("percent").textContent = `${Math.round(progress)}%`;
+        $("progress").style.width = `${progress}%`;
+        $("ring").style.strokeDashoffset = ringLength - (ringLength * progress) / 100;
+
+        if (remaining <= 0) {
+          clearInterval(timer);
+          revealGateway(data);
+        }
+      }, 1000);
+    }
+
+    function revealGateway(data) {
+      $("processing-view").classList.add("hidden");
+      $("revealed-view").classList.remove("hidden");
+      $("target-link").href = data.target;
+
+      let delay = data.redirectSeconds;
+      $("redirect-counter").textContent = delay;
+
+      const redirectTimer = setInterval(() => {
+        delay--;
+        $("redirect-counter").textContent = Math.max(0, delay);
+
+        if (delay <= 0) {
+          clearInterval(redirectTimer);
+          location.href = data.target;
+        }
+      }, 1000);
+    }
+
+    function testLivePreview() {
+      if (config) startGateway(config);
+    }
+
+    $("generate-button").addEventListener("click", generateEncryptedLink);
+    $("copy-button").addEventListener("click", copyGeneratedLink);
+    $("preview-button").addEventListener("click", testLivePreview);
+
+    window.addEventListener("resize", () => {
+      resizeCanvas();
+      createParticles();
+    });
+
+    resizeCanvas();
+    createParticles();
+    drawParticles();
+
+    const hashValue = location.hash.startsWith("#q=")
+      ? location.hash.slice(3)
+      : "";
+
+    if (hashValue) {
+      try {
+        startGateway(decodeConfig(hashValue));
+      } catch {
+        history.replaceState(null, "", location.pathname);
+      }
+    }
+  </script>
+</body>
+</html>
